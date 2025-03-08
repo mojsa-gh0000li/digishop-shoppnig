@@ -1,17 +1,12 @@
 "use client";
 
-import { useContext } from "react";
-import { CartContext } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext"; // استفاده از هوک سفارشی CartContext
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function CartPage() {
-  const cartContext = useContext(CartContext);
   const router = useRouter();
-
-  if (!cartContext) return <p>خطایی رخ داده است.</p>;
-
-  const { cartItems, removeFromCart, updateQuantity, totalPrice } = cartContext;
+  const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart(); // استفاده از useCart
 
   if (cartItems.length === 0) {
     return (
@@ -33,11 +28,11 @@ export default function CartPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cartItems.map((item) => (
-          <div 
-            key={item.id} 
+          <div
+            key={item.id}
             className="border p-4 rounded-lg flex flex-col items-center shadow-md hover:shadow-lg transition"
           >
-            <Image 
+            <Image
               src={item.image.startsWith("http") ? item.image : `https://apidigishop.narinsoft.ir${item.image}`}
               alt={item.title}
               width={150}
@@ -45,7 +40,9 @@ export default function CartPage() {
               className="rounded-lg object-cover w-[120px] h-[120px] sm:w-[150px] sm:h-[150px]"
             />
             <h2 className="text-lg font-semibold mt-2 text-center">{item.title}</h2>
-            <p className="text-gray-600 text-center">قیمت: {Number(item.price).toLocaleString()} تومان</p>
+            <p className="text-gray-600 text-center">
+              قیمت: {Number(item.price).toLocaleString()} تومان
+            </p>
 
             <div className="flex items-center gap-2 mt-2">
               <button

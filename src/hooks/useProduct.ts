@@ -1,29 +1,16 @@
-import { useState, useEffect } from "react";
-import { fetchProductById } from "@/lib/api";
-import { Product } from "@/lib/api"; 
+import { useQuery } from "@tanstack/react-query";
+import { fetchProductById, Product } from "@/lib/api";
+
 export function useProduct(id: string) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: product = null, isLoading, isError, error } = useQuery<Product>({
+    queryKey: ["product", id],
+    queryFn: () => fetchProductById(id),
+    enabled: !!id, // فراخوانی تنها زمانی انجام می‌شود که id مقداردهی شده باشد
+  });
 
-  useEffect(() => {
-    if (!id) return;
-
-    const getProduct = async () => {
-      try {
-        setIsLoading(true);
-        const data = await fetchProductById(id);
-        setProduct(data);
-      } catch (err) {
-        setError("مشکلی در دریافت اطلاعات محصول پیش آمد.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getProduct();
-  }, [id]);
-
-  return { product, isLoading, error };
+  return {
+    product,
+    isLoading,
+    error: isError ? "مشکلی در دریافت اطلاعات محصول پیش آمد." : null,
+  };
 }
-

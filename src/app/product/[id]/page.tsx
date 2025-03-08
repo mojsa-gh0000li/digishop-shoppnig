@@ -2,25 +2,17 @@
 
 import { useParams } from "next/navigation";
 import { useProduct } from "@/hooks/useProduct";
-import { useContext, useState } from "react";
-import { CartContext } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext"; // استفاده از هوک سفارشی برای CartContext
 import Image from "next/image";
+import { useState } from "react";
 
 export default function ProductPage() {
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
-  const { product, isLoading, error } = useProduct(id);
-  const cartContext = useContext(CartContext);
 
-  if (!cartContext)
-    return (
-      <p className="text-red-500 text-center mt-4">
-        مشکلی در دسترسی به سبد خرید وجود دارد.
-      </p>
-    );
-
-  const { addToCart } = cartContext;
+  const { product, isLoading, error } = useProduct(id); // استفاده از هوک useProduct
+  const { addToCart } = useCart(); // استفاده از هوک useCart
 
   if (isLoading)
     return <p className="text-center text-gray-600">در حال بارگذاری...</p>;
@@ -32,7 +24,7 @@ export default function ProductPage() {
     return <p className="text-center text-gray-600">محصولی یافت نشد</p>;
 
   const cartItem = {
-    id: String(params.id) ?? "",
+    id: id ?? "",
     title: product.title,
     price: product.price,
     image: `https://apidigishop.narinsoft.ir/${product.image}`,
@@ -41,7 +33,6 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     console.log("data", cartItem);
-
     addToCart(cartItem);
     setIsAddedToCart(true);
   };
@@ -59,7 +50,7 @@ export default function ProductPage() {
         <h1 className="text-2xl font-bold mt-4">{product.title}</h1>
         <p className="text-gray-600 mt-2 text-center">{product.description}</p>
         <p className="text-lg font-semibold text-blue-600 mt-4">
-        {Number(product.price).toLocaleString()} تومان
+          {Number(product.price).toLocaleString()} تومان
         </p>
         <button
           className={`mt-4 px-6 py-2 ${

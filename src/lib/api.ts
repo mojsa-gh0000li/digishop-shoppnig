@@ -1,54 +1,72 @@
+import axios from "axios";
+
 const BASE_URL = "https://apidigishop.narinsoft.ir/api";
 
 export interface Product {
-  id: number;
-  title: string;
-  price: any;
-  description: string;
-  category: string;
-  image: string;
-  date:any;
+  _id: string; // آیدی محصول
+  title: string; // عنوان محصول
+  price: number; // قیمت محصول
+  description: string; // توضیحات محصول
+  category: string; // دسته‌بندی محصول
+  image: string; // تصویر محصول
+  date: string; // تاریخ محصول
 }
 
-export async function fetchProducts(): Promise<Product[]> {
+const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// دریافت لیست کامل محصولات
+export const fetchProducts = async (): Promise<Product[]> => {
   try {
-    const res = await fetch(`${BASE_URL}/products`);
-    if (!res.ok) throw new Error(`خطا در دریافت لیست محصولات: ${res.status} ${res.statusText}`);
-    return await res.json();
-  } catch (error) {
-    console.error("⚠️ خطا در دریافت محصولات:", error);
+    const { data } = await apiClient.get("/products");
+    return data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error("⚠️ خطا در دریافت محصولات:", error.message);
+    } else {
+      console.error("⚠️ خطای ناشناخته:", error);
+    }
     throw error;
   }
-}
+};
 
-export async function fetchProductById(id: string): Promise<Product> {
+// دریافت جزئیات یک محصول براساس آیدی
+export const fetchProductById = async (id: string): Promise<Product> => {
   try {
-    const res = await fetch(`${BASE_URL}/products/${id}`);
-    if (!res.ok) throw new Error(`خطا در دریافت جزئیات محصول: ${res.status} ${res.statusText}`);
-    return await res.json();
-  } catch (error) {
-    console.error("⚠️ خطا در دریافت جزئیات محصول:", error);
+    const { data } = await apiClient.get(`/products/${id}`);
+    return data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error("⚠️ خطا در دریافت جزئیات محصول:", error.message);
+    } else {
+      console.error("⚠️ خطای ناشناخته:", error);
+    }
     throw error;
   }
-}
+};
 
-export async function fetchCategories(): Promise<Map<string, string>> {
+// دریافت دسته‌بندی‌ها
+export const fetchCategories = async (): Promise<{ _id: string; title: string }[]> => {
   try {
-    const res = await fetch(`${BASE_URL}/categories`);
-    if (!res.ok) throw new Error(`خطا در دریافت دسته‌بندی‌ها: ${res.status} ${res.statusText}`);
-
-    const data: { _id: string; title: string }[] = await res.json();
-    console.log("📦 دسته‌بندی‌های دریافت شده:", data);
-
-    const categoryMap = new Map(data.map((cat) => [cat.title, cat._id]));
-    return categoryMap;
-  } catch (error) {
-    console.error("⚠️ خطا در دریافت دسته‌بندی‌ها:", error);
-    return new Map();
+    const { data } = await apiClient.get<{ _id: string; title: string }[]>(
+      "/categories"
+    );
+    return data; // برگرداندن آرایه دسته‌بندی‌ها
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error("⚠️ خطا در دریافت دسته‌بندی‌ها:", error.message);
+    } else {
+      console.error("⚠️ خطای ناشناخته:", error);
+    }
+    return []; // بازگشت آرایه خالی در صورت خطا
   }
-}
+};
 
-export async function fetchProductsByCategory({
+export const fetchProductsByCategory = async ({
   category = "",
   sort = "date",
   query = "",
@@ -56,24 +74,21 @@ export async function fetchProductsByCategory({
   category?: string;
   sort?: "date" | "price";
   query?: string;
-}): Promise<Product[]> {
+}): Promise<Product[]> => {
   try {
-    const params = new URLSearchParams();
-    if (category) params.append("category", category);
-    if (sort) params.append("sort", sort);
-    if (query) params.append("query", query);
+    const params: Record<string, string> = {};
+    if (category) params.category = category;
+    if (sort) params.sort = sort;
+    if (query) params.query = query;
 
-    const url = `${BASE_URL}/products?${params.toString()}`;
-    console.log("📡 درخواست به:", url);
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`خطا در دریافت محصولات: ${res.status} ${res.statusText}`);
-
-    const data = await res.json();
-    console.log("📦 داده‌های دریافت شده:", data);
+    const { data } = await apiClient.get("/products", { params });
     return data;
-  } catch (error) {
-    console.error("⚠️ خطا در دریافت محصولات:", error);
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error("⚠️ خطا در دریافت محصولات:", error.message);
+    } else {
+      console.error("⚠️ خطای ناشناخته:", error);
+    }
     throw error;
   }
-}
+};

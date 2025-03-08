@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface CartItem {
   id: string;
@@ -15,51 +16,62 @@ interface CartContextType {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
-  totalPrice: string; 
+  totalPrice: string;
 }
 
-export const CartContext = createContext<CartContextType | null>(null);
+// ایجاد کانتکست برای سبد خرید
+const CartContext = createContext<CartContextType | null>(null);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
-  }, []);
+  // مدیریت کش با React Query
+  const { data: cartItems = [] } = useQuery<CartItem[]>({
+    queryKey: ["cart"],
+    queryFn: () => {
+      const savedCart = localStorage.getItem("cart");
+      return savedCart ? JSON.parse(savedCart) : [];
+    },
+    staleTime: Infinity, // کش همیشه معتبر می‌ماند
+  });
 
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-  }, [cartItems]);
+  // به‌روزرسانی داده‌ها در localStorage و کش
+  const saveCartToLocalStorage = (cart: CartItem[]) => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+    queryClient.setQueryData(["cart"], cart);
+  };
 
+  // اضافه کردن محصول به سبد خرید
   const addToCart = (item: CartItem) => {
-    setCartItems((prev) => {
-      const existingItem = prev.find((cartItem) => cartItem.id === item.id);
-      if (existingItem) {
-        return prev.map((cartItem) => ({
-          ...cartItem,
-          quantity: cartItem.quantity + 1,
-        }));
-      }
-      return [...prev, { ...item, quantity: 1 }];
-    });
+    const updatedCart = cartItems.some((cartItem) => cartItem.id === item.id)
+      ? cartItems.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        )
+      : [...cartItems, { ...item, quantity: 1 }];
+
+    saveCartToLocalStorage(updatedCart);
   };
 
+  // حذف محصول از سبد خرید
   const removeFromCart = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+    const updatedCart = cartItems.filter((item) => item.id !== id);
+    saveCartToLocalStorage(updatedCart);
   };
 
+  // به‌روزرسانی تعداد محصول در سبد خرید
   const updateQuantity = (id: string, quantity: number) => {
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item
-      )
+    const updatedCart = cartItems.map((item) =>
+      item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item
     );
+    saveCartToLocalStorage(updatedCart);
   };
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString();
+  // محاسبه مبلغ کل
+  const totalPrice = cartItems
+    .reduce((sum, item) => sum + item.price * item.quantity, 0)
+    .toLocaleString();
 
   return (
     <CartContext.Provider
@@ -74,4 +86,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </CartContext.Provider>
   );
+};
+
+// هوک سفارشی برای استفاده از کانتکست
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart must be used within a CartProvider");
+  }
+  return context;
 };

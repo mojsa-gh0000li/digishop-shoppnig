@@ -1,26 +1,16 @@
-
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "../lib/api";
 
 export function useProducts() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: products = [], isLoading, isError, error } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 5 * 60 * 1000, // مدیریت اعتبار داده‌ها
+  });
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const data = await fetchProducts();
-        setProducts(data);
-      } catch (err) {
-        setError("خطا در دریافت محصولات");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadProducts();
-  }, []);
-
-  return { products, loading, error };
+  return {
+    products,
+    loading: isLoading,
+    error: isError ? "خطا در دریافت محصولات" : null,
+  };
 }

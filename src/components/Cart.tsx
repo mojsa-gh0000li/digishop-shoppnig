@@ -1,17 +1,10 @@
 "use client";
 
-import { useContext } from "react";
-import { CartContext } from "@/context/CartContext";
 import Image from "next/image";
+import { useCart } from "@/context/CartContext";
 
 const CartPage = () => {
-  const cartContext = useContext(CartContext);
-
-  if (!cartContext) {
-    return <p>در حال بارگذاری...</p>;
-  }
-
-  const { cartItems, removeFromCart, updateQuantity } = cartContext;
+  const { cartItems, removeFromCart, updateQuantity } = useCart(); // استفاده از هوک سفارشی
 
   return (
     <div className="bg-white shadow-md rounded-lg p-4">
@@ -20,10 +13,16 @@ const CartPage = () => {
           {cartItems.map((item) => (
             <li key={item.id} className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-4">
-                <Image src={item.image} alt={item.title} width={50} height={50} className="rounded-md" />
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  width={50}
+                  height={50}
+                  className="rounded-md"
+                />
                 <div>
                   <p className="text-lg font-semibold">{item.title}</p>
-                  <p className="text-gray-600">{item.price} تومان</p>
+                  <p className="text-gray-600">{Number(item.price).toLocaleString()} تومان</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
