@@ -1,11 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Product } from "@/lib/api";
 
 export default function ProductCard({ product }: { product: Product }) {
   return (
     <div className="max-w-52 border flex flex-col items-center rounded-lg p-3">
-      <Image
+      <img
         src={`https://apidigishop.narinsoft.ir/${product.image}`}
         alt={product.title}
         className="w-40 h-fit object-cover rounded-lg overflow-hidden"
